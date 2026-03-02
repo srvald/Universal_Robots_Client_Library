@@ -84,6 +84,7 @@ else()
     target_compile_options(urcl PUBLIC -fsanitize=address)
     target_link_options(urcl PUBLIC -fsanitize=address)
   endif()
+  target_link_libraries(urcl PUBLIC stdc++fs)
 endif()
 
 target_include_directories(urcl PUBLIC
@@ -141,6 +142,10 @@ else()
     DESTINATION lib/${PROJECT_NAME}
   )
 endif()
+
+install(PROGRAMS scripts/tool_communication.py
+  DESTINATION share/${PROJECT_NAME}/scripts
+)
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ur_client_libraryConfigVersion.cmake VERSION 0.0.3
