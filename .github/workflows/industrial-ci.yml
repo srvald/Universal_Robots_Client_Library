@@ -73,3 +73,30 @@ jobs:
           OS_NAME: ${{ steps.config.outputs.os_name }}
           OS_CODE_NAME: ${{ steps.config.outputs.os_code }}
           ${{ steps.config.outputs.additional_pkgs_name }}: ${{ steps.config.outputs.additional_pkgs_values }}
+
+      - name: industrial_ci (RHEL)
+        if: ${{ matrix.PLATFORM == 'rhel' }}
+        uses: ros-industrial/industrial_ci@master
+        env:
+          IMMEDIATE_TEST_OUTPUT: true
+          DOWNSTREAM_CMAKE_ARGS: -DUR_ROBOT_DRIVER_BUILD_INTEGRATION_TESTS=ON
+          DOWNSTREAM_WORKSPACE: ${{ matrix.ROS_DISTRO.DOWNSTREAM_WORKSPACE }}
+          ROS_DISTRO: ${{ matrix.ROS_DISTRO.NAME }}
+          ROS_REPO: ${{ matrix.ROS_REPO }}
+          CLANG_TIDY: ${{ matrix.ROS_DISTRO.CLANG_TIDY }}
+          DOCKER_IMAGE: ${{ steps.config.outputs.docker_image }}
+          OS_NAME: ${{ steps.config.outputs.os_name }}
+          OS_CODE_NAME: ${{ steps.config.outputs.os_code }}
+          ${{ steps.config.outputs.additional_pkgs_name }}: ${{ steps.config.outputs.additional_pkgs_values }}
+
+      - name: industrial_ci (Ubuntu)
+        if: ${{ matrix.PLATFORM == 'ubuntu' }}
+        uses: ros-industrial/industrial_ci@master
+        env:
+          IMMEDIATE_TEST_OUTPUT: true
+          DOWNSTREAM_CMAKE_ARGS: -DUR_ROBOT_DRIVER_BUILD_INTEGRATION_TESTS=ON
+          DOWNSTREAM_WORKSPACE: ${{ matrix.ROS_DISTRO.DOWNSTREAM_WORKSPACE }}
+          ROS_DISTRO: ${{ matrix.ROS_DISTRO.NAME }}
+          ROS_REPO: ${{ matrix.ROS_REPO }}
+          CLANG_TIDY: ${{ matrix.ROS_DISTRO.CLANG_TIDY }}
+          ${{ steps.config.outputs.additional_pkgs_name }}: ${{ steps.config.outputs.additional_pkgs_values }}
