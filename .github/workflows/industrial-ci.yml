@@ -8,7 +8,7 @@ on:
 
 jobs:
   industrial_ci:
-    name: ${{ matrix.ROS_DISTRO.NAME }} | ${{ matrix.ROS_REPO }}${{ matrix.PLATFORM == 'rhel' && ' (RHEL)' || '(UBUNTU)' }}
+    name: ${{ matrix.ROS_DISTRO.NAME }} | ${{ matrix.ROS_REPO }}${{ matrix.PLATFORM == 'rhel' && ' (RHEL)' || ' (UBUNTU)' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,8 +54,10 @@ jobs:
               echo "docker_image=ghcr.io/ros-controls/ros:${{ matrix.ROS_DISTRO.NAME }}-rhel" >> $GITHUB_OUTPUT
               echo "additional_pkgs_name=ADDITIONAL_RPMS" >> $GITHUB_OUTPUT
               echo "additional_pkgs_values=nmap-ncat" >> $GITHUB_OUTPUT
+              echo "os_name=el" >> $GITHUB_OUTPUT
+              echo "os_code=8" >> $GITHUB_OUTPUT
+
           else
-            echo "docker_image=" >> $GITHUB_OUTPUT
             echo "additional_pkgs_name=ADDITIONAL_DEBS" >> $GITHUB_OUTPUT
             echo "additional_pkgs_values=docker.io netcat-openbsd" >> $GITHUB_OUTPUT
           fi
@@ -68,4 +70,6 @@ jobs:
           ROS_REPO: ${{matrix.ROS_REPO}}
           CLANG_TIDY: ${{matrix.ROS_DISTRO.CLANG_TIDY}}
           DOCKER_IMAGE: ${{ steps.config.outputs.docker_image }}
+          OS_NAME: ${{ steps.config.outputs.os_name }}
+          OS_CODE_NAME: ${{ steps.config.outputs.os_code }}
           ${{ steps.config.outputs.additional_pkgs_name }}: ${{ steps.config.outputs.additional_pkgs_values }}
