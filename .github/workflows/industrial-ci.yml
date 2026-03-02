@@ -54,7 +54,7 @@ jobs:
               echo "docker_image=ghcr.io/ros-controls/ros:${{ matrix.ROS_DISTRO.NAME }}-rhel" >> $GITHUB_OUTPUT
               echo "additional_pkgs_name=ADDITIONAL_RPMS" >> $GITHUB_OUTPUT
               echo "additional_pkgs_values=nmap-ncat" >> $GITHUB_OUTPUT
-              echo "os_name=el" >> $GITHUB_OUTPUT
+              echo "os_name=rhel" >> $GITHUB_OUTPUT
               echo "os_code=8" >> $GITHUB_OUTPUT
 
           else
