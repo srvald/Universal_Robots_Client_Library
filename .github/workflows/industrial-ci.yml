@@ -13,6 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        PLATFORM: [ubuntu, rhel]
         ROS_DISTRO:
           - NAME: noetic
             DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS_Driver#master"
@@ -33,17 +34,18 @@ jobs:
           - main
           - testing
     env:
-      DOCKER_RUN_OPTS: '-v /var/run/docker.sock:/var/run/docker.sock --network ursim_net'
+      DOCKER_RUN_OPTS: "-v /var/run/docker.sock:/var/run/docker.sock --network ursim_net"
     steps:
       - uses: actions/checkout@v6
       - run: docker network create --subnet=192.168.56.0/24 ursim_net
         if: ${{ !env.ACT }}
-      - uses: 'ros-industrial/industrial_ci@master'
+      - uses: "ros-industrial/industrial_ci@master"
         env:
           IMMEDIATE_TEST_OUTPUT: true
           DOWNSTREAM_CMAKE_ARGS: -DUR_ROBOT_DRIVER_BUILD_INTEGRATION_TESTS=ON
-          ADDITIONAL_DEBS: docker.io netcat-openbsd  # Needed for integration tests
+          ADDITIONAL_DEBS: docker.io netcat-openbsd # Needed for integration tests
           DOWNSTREAM_WORKSPACE: ${{matrix.ROS_DISTRO.DOWNSTREAM_WORKSPACE}}
           ROS_DISTRO: ${{matrix.ROS_DISTRO.NAME}}
           ROS_REPO: ${{matrix.ROS_REPO}}
           CLANG_TIDY: ${{matrix.ROS_DISTRO.CLANG_TIDY}}
+          DOCKER_IMAGE: ${{ matrix.PLATFORM == 'rhel' && format('ghcr.io/ros-controls/ros:{0}-rhel', matrix.ROS_DISTRO.NAME) || '' }}
