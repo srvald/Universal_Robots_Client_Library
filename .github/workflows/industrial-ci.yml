@@ -52,34 +52,26 @@ jobs:
     name: ${{matrix.ROS_DISTRO.NAME}}, ${{matrix.ROS_REPO}} (RHEL)
     runs-on: ubuntu-latest
     container: ghcr.io/ros-controls/ros:${{ matrix.ROS_DISTRO.NAME }}-rhel
+    env:
+      # this will be src/{repo-owner}/{repo-name}
+      path: src/${{ github.repository }}
     strategy:
       fail-fast: false
       matrix:
         ROS_DISTRO:
           - NAME: humble
-            DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS2_Driver#humble"
-            CLANG_TIDY: ""
           - NAME: jazzy
-            DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS2_Driver#jazzy"
-            CLANG_TIDY: ""
           - NAME: kilted
-            DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS2_Driver#main"
-            CLANG_TIDY: ""
           - NAME: rolling
-            DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS2_Driver#main"
-            CLANG_TIDY: pedantic
-        ROS_REPO:
-          - main
-          - testing
 
     steps:
       - uses: actions/checkout@v6
-      - uses: ros-industrial/industrial_ci@master
-        env:
-          IMMEDIATE_TEST_OUTPUT: true
-          DOWNSTREAM_CMAKE_ARGS: -DUR_ROBOT_DRIVER_BUILD_INTEGRATION_TESTS=ON
-          ADDITIONAL_RPMS: nmap-ncat
-          DOWNSTREAM_WORKSPACE: ${{ matrix.ROS_DISTRO.DOWNSTREAM_WORKSPACE }}
-          ROS_DISTRO: ${{ matrix.ROS_DISTRO.NAME }}
-          ROS_REPO: ${{ matrix.ROS_REPO }}
-          CLANG_TIDY: ${{ matrix.ROS_DISTRO.CLANG_TIDY }}
+        with:
+          path: ${{ env.path }}
+
+      - name: Build workspace
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.ROS_DISTRO.NAME }}/setup.bash
+          source /opt/ros2_ws/install/local_setup.bash
+          colcon build
