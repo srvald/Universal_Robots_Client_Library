@@ -8,7 +8,7 @@ on:
 
 jobs:
   industrial_ci:
-    name: ${{matrix.ROS_DISTRO.NAME}}, ${{matrix.ROS_REPO}}
+    name: ${{ matrix.ROS_DISTRO.NAME }} | ${{ matrix.ROS_REPO }}${{ matrix.PLATFORM == 'rhel' && ' (RHEL)' || '(UBUNTU)' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -33,19 +33,39 @@ jobs:
         ROS_REPO:
           - main
           - testing
+
+        exclude:
+          - PLATFORM: rhel
+            ROS_DISTRO:
+              NAME: noetic
+              DOWNSTREAM_WORKSPACE: "github:UniversalRobots/Universal_Robots_ROS_Driver#master"
+              CLANG_TIDY: ""
+
     env:
       DOCKER_RUN_OPTS: "-v /var/run/docker.sock:/var/run/docker.sock --network ursim_net"
     steps:
       - uses: actions/checkout@v6
       - run: docker network create --subnet=192.168.56.0/24 ursim_net
         if: ${{ !env.ACT }}
+      - name: Platform-specific configuration
+        id: config
+        run: |
+          if [ "${{ matrix.PLATFORM }}" = "rhel" ]; then
+              echo "docker_image=ghcr.io/ros-controls/ros:${{ matrix.ROS_DISTRO.NAME }}-rhel" >> $GITHUB_OUTPUT
+              echo "additional_pkgs_name=ADDITIONAL_RPMS" >> $GITHUB_OUTPUT
+              echo "additional_pkgs_values=nmap-ncat" >> $GITHUB_OUTPUT
+          else
+            echo "docker_image=" >> $GITHUB_OUTPUT
+            echo "additional_pkgs_name=ADDITIONAL_DEBS" >> $GITHUB_OUTPUT
+            echo "additional_pkgs_values=docker.io netcat-openbsd" >> $GITHUB_OUTPUT
+          fi
       - uses: "ros-industrial/industrial_ci@master"
         env:
           IMMEDIATE_TEST_OUTPUT: true
           DOWNSTREAM_CMAKE_ARGS: -DUR_ROBOT_DRIVER_BUILD_INTEGRATION_TESTS=ON
-          ADDITIONAL_DEBS: docker.io netcat-openbsd # Needed for integration tests
           DOWNSTREAM_WORKSPACE: ${{matrix.ROS_DISTRO.DOWNSTREAM_WORKSPACE}}
           ROS_DISTRO: ${{matrix.ROS_DISTRO.NAME}}
           ROS_REPO: ${{matrix.ROS_REPO}}
           CLANG_TIDY: ${{matrix.ROS_DISTRO.CLANG_TIDY}}
-          DOCKER_IMAGE: ${{ matrix.PLATFORM == 'rhel' && format('ghcr.io/ros-controls/ros:{0}-rhel', matrix.ROS_DISTRO.NAME) || '' }}
+          DOCKER_IMAGE: ${{ steps.config.outputs.docker_image }}
+          ${{ steps.config.outputs.additional_pkgs_name }}: ${{ steps.config.outputs.additional_pkgs_values }}
