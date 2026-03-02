@@ -77,9 +77,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - run: docker network create --subnet=192.168.56.0/24 ursim_net
-        if: ${{ !env.ACT }}
-
       - uses: ros-industrial/industrial_ci@master
         env:
           IMMEDIATE_TEST_OUTPUT: true
