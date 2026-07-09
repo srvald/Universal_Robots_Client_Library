@@ -334,3 +334,47 @@ the ``cpufrequtils`` service. Check with ``cpufreq-info``.
 
 For further information about governors, please see the `kernel
 documentation <https://www.kernel.org/doc/Documentation/cpu-freq/governors.txt>`_.
+
+.. _windows_wsl_setup:
+
+Real-Time on Windows and WSL2
+=============================
+
+While it is possible to run the Universal Robots ROS 2 driver on Windows or via the Windows Subsystem for Linux (WSL2), 
+it is important to understand the fundamental differences in real-time capabilities compared to a native Linux system. 
+
+Hard Real-Time vs. Soft Real-Time
+---------------------------------
+
+* **Native Ubuntu (PREEMPT_RT):** Provides **hard real-time** capabilities. By using the ``SCHED_FIFO`` scheduling policy, 
+  threads can be assigned a real-time priority up to 99. This guarantees the strict hardware-level determinism required 
+  for high-frequency (e.g., 500 Hz) robot control, ensuring deadlines are strictly met.
+* **Windows and WSL2:** Provide at best **soft real-time** capabilities. Windows is not natively a Real-Time Operating 
+  System (RTOS). The maximum thread priority available on Windows is 31 (``THREAD_PRIORITY_TIME_CRITICAL``) with (``REALTIME_PRIORITY_CLASS``). While you can 
+  optimize Windows by tweaking CPU affinity and priorities, the OS scheduler is not designed to guarantee strict deterministic 
+  execution. Furthermore, running ROS 2 inside WSL2 introduces additional jitter due to the lightweight virtualization layer 
+  and network abstraction.
+
+Limitations for Standard Control
+--------------------------------
+
+Because Windows and WSL2 can only provide soft real-time performance, **using them for standard high-frequency control is highly discouraged**. 
+
+Users attempting to run standard interpolating controllers (like the ``joint_trajectory_controller``) in these environments 
+will typically experience the following critical issues:
+
+* **Missed Cycles and Overruns:** The control loop will frequently fail to meet the strict 2ms deadline, spamming the terminal 
+  with warnings such as: ``[controller_manager]: Overrun might occur, Total time : 6381.599 us (Expected < 2000.000 us)``.
+* **Dropped Connections:** Network bridging and execution spikes inevitably cause communication timeouts. This leads to 
+  critical failures like ``Connection to reverse interface dropped`` and ``Trajectory disconnect``.
+* **Unstable Execution:** The robot may perform jittery, stop-and-go movements or halt entirely as the driver continuously 
+  drops the connection and attempts to reconnect to the RTDE interface.
+
+Alternative for Windows Users: Passthrough Trajectory Controller
+----------------------------------------------------------------
+
+If you are bound to a Windows environment and cannot migrate to a native Ubuntu setup, standard real-time controllers will 
+not function reliably. Instead, you must use the ``ur_controllers/PassthroughTrajectoryController``, because it does not 
+have strict real-time requirements; the interpolation and execution are handled directly by the robot controller.
+
+For more information, please see the `PassthroughTrajectoryController documentation <https://docs.universal-robots.com/Universal_Robots_ROS2_Documentation/doc/ur_robot_driver/ur_controllers/doc/index.html#ur-controllers-passthroughtrajectorycontroller>`_.
